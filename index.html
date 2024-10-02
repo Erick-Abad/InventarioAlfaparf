@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Inventario Alfaparf</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <h1 id="title">Sistema de Inventario Alfaparf</h1>
+        <nav>
+            <ul>
+                <li><a href="#" id="home">Inicio</a></li>
+                <li><a href="#" id="products">Productos</a></li>
+                <li><a href="#" id="categories">Categorías</a></li>
+                <li><a href="#" id="reports">Reportes</a></li>
+                <li><a href="#" id="dashboard-link">Dashboard</a></li>
+                <li><a href="#" id="inventory-link">Inventario</a></li>
+                <li><a href="#" id="location-link">Ubicación</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <div class="container">
+        <aside class="sidebar">
+            <ul>
+                <li><a href="#" id="dashboard">Dashboard</a></li>
+                <li><a href="#" id="inventory">Inventario</a></li>
+                <li><a href="#" id="users">Usuarios</a></li>
+                <li><a href="#" id="settings">Configuración</a></li>
+            </ul>
+        </aside>
+        
+        <!-- Main Dashboard Section -->
+        <main class="main-content" id="dashboard-section" style="display:none;">
+            <h2>Dashboard</h2>
+            <div class="dashboard-cards">
+                <div class="card">
+                    <h3>Total de Productos</h3>
+                    <p id="total-products">0</p>
+                </div>
+                <div class="card">
+                    <h3>Productos Agotados</h3>
+                    <p id="out-of-stock">0</p>
+                </div>
+                <div class="card">
+                    <h3>Categorías</h3>
+                    <p id="total-categories">0</p>
+                </div>
+            </div>
+            <h2>Gráficos</h2>
+            <canvas id="inventory-chart" width="400" height="200"></canvas>
+        </main>
+
+        <!-- Inventario Section -->
+        <main class="main-content" id="inventory-section" style="display:none;">
+            <h2 id="inventory-title">Inventario</h2>
+            <button id="add-product-btn">Agregar Producto</button>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th id="product-name">Nombre del Producto</th>
+                        <th id="category">Categoría</th>
+                        <th id="quantity">Cantidad</th>
+                        <th id="actions">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="inventory-body">
+                    <!-- Productos se cargarán dinámicamente -->
+                </tbody>
+            </table>
+        </main>
+
+        <!-- Ubicación Section -->
+        <main class="main-content" id="location-section" style="display:none;">
+            <h2>Ubicación</h2>
+            <button id="assign-location-btn">Asignar a Ubicación A1</button>
+            <p id="location-info">Ubicación A1 está vacía.</p>
+        </main>
+
+        <!-- Formulario para agregar productos -->
+        <div id="product-modal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <h2>Agregar Producto</h2>
+                <form id="product-form">
+                    <label for="product-id">ID del Producto:</label>
+                    <input type="text" id="product-id" required>
+                    <label for="product-name-input">Nombre del Producto:</label>
+                    <input type="text" id="product-name-input" required>
+                    <label for="product-category">Categoría:</label>
+                    <input type="text" id="product-category" required>
+                    <label for="product-quantity">Cantidad:</label>
+                    <input type="number" id="product-quantity" required>
+                    <button type="submit">Agregar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <button id="save-inventory-btn">Guardar Inventario</button>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

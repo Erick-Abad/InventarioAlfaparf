@@ -7,76 +7,156 @@ document.addEventListener('DOMContentLoaded', function() {
     const assignLocationBtn = document.getElementById('assign-location-btn');
     const locationSection = document.getElementById('location-section');
     const inventoryLink = document.getElementById('inventory-link');
-    const locationLink = document.getElementById('location-link'); // Añadido para Ubicación
+    const locationLink = document.getElementById('location-link');
     const inventorySection = document.getElementById('inventory-section');
     const dashboardLink = document.getElementById('dashboard-link');
     const dashboardSection = document.getElementById('dashboard-section');
     const saveInventoryBtn = document.getElementById('save-inventory-btn');
     const inventoryChartElement = document.getElementById('inventory-chart');
+    const productsLink = document.getElementById('products-link');
+    const productsSection = document.getElementById('products-section');
+    const productsBody = document.getElementById('products-body');
+    const fileUpload = document.getElementById('file-upload');
+    const saveProductsBtn = document.getElementById('save-products-btn');
+    const categoryLink = document.getElementById('categories-link');
+    const categorySection = document.getElementById('categories-section');
+
+    // Unificar el almacenamiento en una sola variable
     let locationA1 = localStorage.getItem('locationA1') || null;
+    let productos = JSON.parse(localStorage.getItem('productos')) || [];
 
-    let products = JSON.parse(localStorage.getItem('products')) || [];
-    let inventoryChart = null; // Variable para almacenar el gráfico actual
+    // Función para aplicar el color según el estado del producto
+    function getEstadoClass(estado) {
+        if (estado === 'AGOTADO') {
+            return 'estado-agotado';
+        } else if (estado === 'POR AGOTAR') {
+            return 'estado-por-agotar';
+        } else {
+            return 'estado-disponible';
+        }
+    }
 
-    // Función para mostrar productos en la tabla de inventario
+    // Renderizar productos en la tabla
+    function renderProducts() {
+        productsBody.innerHTML = ''; // Limpiar contenido previo
+        productos.forEach((producto, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${producto['HAIR/MMK']}</td>
+                <td>${producto['LINEA']}</td>
+                <td>${producto['PF-PP']}</td>
+                <td>${producto['MATERIAL']}</td>
+                <td>${producto['DESCRIPCIÓN']}</td>
+                <td>${producto['TOTAL']}</td>
+                <td class="${getEstadoClass(producto['ESTADO'])}">${producto['ESTADO']}</td>
+            `;
+            productsBody.appendChild(row);
+        });
+    }
+
+    // Leer archivo Excel y añadir los datos a la tabla
+    fileUpload.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(event) {
+            const data = new Uint8Array(event.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const excelData = XLSX.utils.sheet_to_json(firstSheet);
+
+            // Variable para contar las nuevas descripciones únicas agregadas
+            let uniqueDescriptionsCount = 0;
+
+            // Obtener las descripciones actuales para evitar duplicados
+            const currentDescriptions = productos.map(producto => producto['DESCRIPCIÓN']);
+
+            // Agregar los datos del Excel a la lista de productos, solo si la descripción no está repetida
+            excelData.forEach(item => {
+                const total = item['TOTAL'];
+                let estado = 'DISPONIBLE';
+                if (total === 0) {
+                    estado = 'AGOTADO';
+                } else if (total <= 10) {
+                    estado = 'POR AGOTAR';
+                }
+
+                // Verificar si la descripción ya existe
+                if (!currentDescriptions.includes(item['DESCRIPCIÓN'])) {
+                    productos.push({
+                        'HAIR/MMK': item['HAIR/MMK'],
+                        'LINEA': item['LINEA'],
+                        'PF-PP': item['PF-PP'],
+                        'MATERIAL': item['MATERIAL'],
+                        'DESCRIPCIÓN': item['DESCRIPCIÓN'],
+                        'TOTAL': total,
+                        'ESTADO': estado
+                    });
+                    uniqueDescriptionsCount++; // Incrementar contador de descripciones únicas
+                }
+            });
+
+            // Renderizar los productos después de añadir los nuevos
+            renderProducts();
+
+            // Mostrar mensaje de cuántas descripciones únicas se agregaron
+            alert(`Se agregaron ${uniqueDescriptionsCount} nuevas descripciones que no estaban repetidas.`);
+        };
+
+        reader.readAsArrayBuffer(file);
+    });
+
+    // Guardar los productos en localStorage
+    saveProductsBtn.addEventListener('click', function() {
+        localStorage.setItem('productos', JSON.stringify(productos));
+        alert('Productos guardados correctamente.');
+    });
+
+    // Renderizar productos al cargar la sección de productos
+    productsLink.addEventListener('click', function() {
+        productsSection.style.display = 'block';
+        inventorySection.style.display = 'none';
+        dashboardSection.style.display = 'none';
+        locationSection.style.display = 'none';
+        categorySection.style.display = 'none';
+        renderProducts();
+    });
+
+    // Renderizar inventario en la tabla de inventario (usamos los mismos datos de productos)
     function renderInventory() {
         tableBody.innerHTML = '';
-        products.forEach((product, index) => {
+        productos.forEach((producto, index) => {
             const newRow = document.createElement('tr');
             newRow.innerHTML = `
-                <td>${product.id}</td>
-                <td>${product.name}</td>
-                <td>${product.category}</td>
-                <td>${product.quantity}</td>
+                <td>${index + 1}</td>
+                <td>${producto['HAIR/MMK']}</td>
+                <td>${producto['LINEA']}</td>
+                <td>${producto['PF-PP']}</td>
+                <td>${producto['MATERIAL']}</td>
+                <td>${producto['DESCRIPCIÓN']}</td>
+                <td>${producto['TOTAL']}</td>
                 <td>
                     <button class="edit-btn">Editar</button>
                     <button class="delete-btn">Eliminar</button>
-                    <button class="save-btn">Guardar</button>
                 </td>
             `;
             tableBody.appendChild(newRow);
         });
     }
 
-    // Guardar inventario en localStorage
+    // Guardar inventario (se guarda como productos en localStorage)
     function saveInventory() {
-        localStorage.setItem('products', JSON.stringify(products));
+        localStorage.setItem('productos', JSON.stringify(productos));
     }
 
-    // Inicializar inventario y ubicaciones
-    renderInventory();
-    if (locationA1) {
-        locationInfo.textContent = `Ubicación A1: ${locationA1}`;
-    }
-
-    // Abrir modal para agregar producto
-    addProductBtn.addEventListener('click', function() {
-        productModal.style.display = 'block';
-    });
-
-    // Agregar producto al inventario
-    productForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const productId = document.getElementById('product-id').value;
-        const productName = document.getElementById('product-name-input').value;
-        const productCategory = document.getElementById('product-category').value;
-        const productQuantity = document.getElementById('product-quantity').value;
-
-        const newProduct = { id: productId, name: productName, category: productCategory, quantity: productQuantity };
-        products.push(newProduct);
-        saveInventory();
-        renderInventory();
-        productModal.style.display = 'none';
-        productForm.reset();
-    });
-
-    // Función para eliminar, editar y guardar
+    // Manejar la edición y eliminación de productos en el inventario
     tableBody.addEventListener('click', function(e) {
         const row = e.target.closest('tr');
         const rowIndex = Array.from(tableBody.children).indexOf(row);
 
         if (e.target.classList.contains('delete-btn')) {
-            products.splice(rowIndex, 1);
+            productos.splice(rowIndex, 1);
             saveInventory();
             renderInventory();
         } else if (e.target.classList.contains('edit-btn')) {
@@ -84,12 +164,12 @@ document.addEventListener('DOMContentLoaded', function() {
             cells[1].setAttribute('contenteditable', 'true');
             cells[2].setAttribute('contenteditable', 'true');
             cells[3].setAttribute('contenteditable', 'true');
-            e.target.textContent = 'Editando...';
+            e.target.textContent = 'Guardando...';
         } else if (e.target.classList.contains('save-btn')) {
             const cells = row.querySelectorAll('td');
-            products[rowIndex].name = cells[1].textContent;
-            products[rowIndex].category = cells[2].textContent;
-            products[rowIndex].quantity = cells[3].textContent;
+            productos[rowIndex].name = cells[1].textContent;
+            productos[rowIndex].category = cells[2].textContent;
+            productos[rowIndex].quantity = cells[3].textContent;
             saveInventory();
             cells[1].setAttribute('contenteditable', 'false');
             cells[2].setAttribute('contenteditable', 'false');
@@ -99,50 +179,46 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Navegar a la sección de inventario
-    inventoryLink.addEventListener('click', function() {
-        inventorySection.style.display = 'block';
-        dashboardSection.style.display = 'none';
-        locationSection.style.display = 'none';
+    // Asignar producto a la ubicación A1
+    assignLocationBtn.addEventListener('click', function() {
+        if (!locationA1) {
+            const productOptions = productos.map(producto => producto['DESCRIPCIÓN']);
+
+            if (productOptions.length > 0) {
+                locationA1 = productOptions[0]; // Selecciona el primer producto disponible por defecto
+                localStorage.setItem('locationA1', locationA1);
+                locationInfo.textContent = `Ubicación A1: ${locationA1}`;
+            } else {
+                alert('No hay productos disponibles en el inventario.');
+            }
+        } else {
+            alert(`Ubicación A1 ya está asignada a: ${locationA1}`);
+        }
     });
 
-    // Navegar a la sección del dashboard
-    dashboardLink.addEventListener('click', function() {
-        dashboardSection.style.display = 'block';
-        inventorySection.style.display = 'none';
-        locationSection.style.display = 'none';
-        updateDashboard();
-    });
-
-    // Navegar a la sección de ubicación
-    locationLink.addEventListener('click', function() { // Ajuste para navegación a Ubicación
-        locationSection.style.display = 'block';
-        inventorySection.style.display = 'none';
-        dashboardSection.style.display = 'none';
-    });
-
-    // Actualizar el dashboard con gráficos y estadísticas
+    // Actualizar el dashboard con estadísticas y gráfico
     function updateDashboard() {
-        const totalProducts = products.length;
-        const outOfStockProducts = products.filter(p => p.quantity == 0).length;
-        const totalCategories = new Set(products.map(p => p.category)).size;
+        const totalProducts = productos.length;
+        const outOfStockProducts = productos.filter(producto => producto['TOTAL'] == 0).length;
+        const totalCategories = new Set(productos.map(producto => producto['LINEA'])).size;
 
         document.getElementById('total-products').textContent = totalProducts;
         document.getElementById('out-of-stock').textContent = outOfStockProducts;
         document.getElementById('total-categories').textContent = totalCategories;
 
-        if (inventoryChart) {
-            inventoryChart.destroy(); // Destruir el gráfico anterior si existe
+        if (window.inventoryChart) {
+            window.inventoryChart.destroy(); // Destruir el gráfico anterior si existe
+       
         }
 
         const ctx = inventoryChartElement.getContext('2d');
-        inventoryChart = new Chart(ctx, {
+        window.inventoryChart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: products.map(p => p.name),
+                labels: productos.map(producto => producto['DESCRIPCIÓN']),
                 datasets: [{
                     label: 'Cantidad de productos',
-                    data: products.map(p => p.quantity),
+                    data: productos.map(producto => producto['TOTAL']),
                     backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     borderColor: 'rgba(54, 162, 235, 1)',
                     borderWidth: 1
@@ -158,21 +234,39 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Asignar producto a ubicación A1
-    assignLocationBtn.addEventListener('click', function() {
-        if (!locationA1) {
-            const productOptions = products.map(product => product.name);
+    // Navegación entre secciones
+    inventoryLink.addEventListener('click', function() {
+        inventorySection.style.display = 'block';
+        dashboardSection.style.display = 'none';
+        locationSection.style.display = 'none';
+        productsSection.style.display = 'none';
+        categorySection.style.display = 'none';
+        renderInventory();
+    });
 
-            if (productOptions.length > 0) {
-                locationA1 = productOptions[0]; // Selecciona el primer producto por defecto
-                localStorage.setItem('locationA1', locationA1);
-                locationInfo.textContent = `Ubicación A1: ${locationA1}`;
-            } else {
-                alert('No hay productos disponibles en el inventario.');
-            }
-        } else {
-            alert(`Ubicación A1: ${locationA1}`);
-        }
+    dashboardLink.addEventListener('click', function() {
+        dashboardSection.style.display = 'block';
+        inventorySection.style.display = 'none';
+        locationSection.style.display = 'none';
+        productsSection.style.display = 'none';
+        categorySection.style.display = 'none';
+        updateDashboard();
+    });
+
+    locationLink.addEventListener('click', function() {
+        locationSection.style.display = 'block';
+        inventorySection.style.display = 'none';
+        dashboardSection.style.display = 'none';
+        productsSection.style.display = 'none';
+        categorySection.style.display = 'none';
+    });
+
+    categoryLink.addEventListener('click', function() {
+        categorySection.style.display = 'block';
+        inventorySection.style.display = 'none';
+        dashboardSection.style.display = 'none';
+        locationSection.style.display = 'none';
+        productsSection.style.display = 'none';
     });
 
     // Guardar inventario manualmente
@@ -180,6 +274,11 @@ document.addEventListener('DOMContentLoaded', function() {
         saveInventory();
         alert('Inventario guardado correctamente.');
     });
+
+    // Cargar ubicación A1 al iniciar
+    if (locationA1) {
+        locationInfo.textContent = `Ubicación A1: ${locationA1}`;
+    }
 
     // Cerrar el modal de agregar productos
     window.addEventListener('click', function(e) {

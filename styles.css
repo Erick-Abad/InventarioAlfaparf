@@ -178,6 +178,37 @@ footer button:hover {
     font-size: 1.2rem;
     margin-top: 20px;
 }
+.estado-agotado {
+    color: red;
+    font-weight: bold;
+}
+
+.estado-por-agotar {
+    color: orange;
+    font-weight: bold;
+}
+
+.estado-disponible {
+    color: green;
+    font-weight: bold;
+}
+
+/* Estilos adicionales para la tabla */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table th, table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+table th {
+    background-color: #f4f4f4;
+}
 
 /* Responsividad */
 @media (max-width: 768px) {
